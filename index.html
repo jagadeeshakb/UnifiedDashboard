@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Accenture · Governance Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23A100FF'/><path d='M16 4L28 26H4L16 4Z' fill='white' opacity='.9'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- CSS load order: tokens → layout → components → agents → extras -->
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="layout.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="agents.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-mark">
+      <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+        <path d="M11 2L20 19H2L11 2Z" fill="white" opacity=".9"/>
+      </svg>
+    </div>
+    <div>
+      <div class="sb-title">Accenture</div>
+      <div class="sb-sub">Governance Dashboard</div>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="nav-sec">Deal views</div>
+    <button class="nav-btn active" data-v="overview" onclick="App.nav('overview')">
+      <i class="ti ti-layout-dashboard"></i>
+      <span class="nb-label">Deal overview</span>
+    </button>
+    <button class="nav-btn" data-v="features" onclick="App.nav('features')">
+      <i class="ti ti-package"></i>
+      <span class="nb-label">Features &amp; inventory</span>
+    </button>
+    <button class="nav-btn" data-v="pricing" onclick="App.nav('pricing')">
+      <i class="ti ti-currency-pound"></i>
+      <span class="nb-label">Price &amp; effort</span>
+    </button>
+
+    <div class="nav-sec">Automation</div>
+    <button class="nav-btn" data-v="agents" onclick="App.nav('agents')">
+      <i class="ti ti-robot"></i>
+      <span class="nb-label">AI agents</span>
+      <span class="nav-pip ai">4</span>
+    </button>
+    <button class="nav-btn" data-v="files" onclick="App.nav('files')">
+      <i class="ti ti-files"></i>
+      <span class="nb-label">File reader</span>
+      <span class="nav-pip" id="fileCountPip" style="display:none;"></span>
+    </button>
+  </nav>
+
+  <div class="sb-foot">
+    <div class="conn">
+      <span class="cdot" id="cdot"></span>
+      <span class="ctext" id="ctext">Initialising...</span>
+    </div>
+    <div class="sb-ver">Governance Dashboard v2.1 · Option B · 2026</div>
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<div class="main">
+  <header class="topbar">
+    <div class="tb-left">
+      <button class="menu-btn" id="menuBtn"
+        onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <i class="ti ti-menu-2"></i>
+      </button>
+      <div class="breadcrumb">
+        <span class="bc-root">Governance</span>
+        <i class="ti ti-chevron-right bc-sep"></i>
+        <span class="bc-cur" id="bcCur">Deal overview</span>
+      </div>
+    </div>
+    <div class="tb-right">
+      <div class="deal-pill">
+        <i class="ti ti-briefcase"></i>
+        <span id="dealCtxPill">No active deal</span>
+      </div>
+      <button class="icon-btn" onclick="App.nav('agents')" title="Run agents">
+        <i class="ti ti-robot"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ════════════════════════════════════
+         VIEW 1 — DEAL OVERVIEW  (Slide 1)
+    ════════════════════════════════════ -->
+    <div class="view active" id="view-overview">
+      <div class="view-hd">
+        <div>
+          <h2 class="view-title">Deal overview</h2>
+          <p class="view-sub">Key deal details, milestone tracking and 4-week delivery plan.</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="Orchestrator.runAgent('deal','overview')">
+            <i class="ti ti-robot"></i> Run deal agent
+          </button>
+          <button class="btn btn-sec btn-sm" onclick="App.openEditDeal()">
+            <i class="ti ti-edit"></i> Edit
+          </button>
+        </div>
+      </div>
+
+      <!-- Deal header card -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;">
+          <div style="padding-right:1.5rem;border-right:1px solid var(--ink-100);">
+            <div class="form-label">Deal name</div>
+            <div style="font-size:1.1rem;font-weight:600;color:var(--ink-900);" id="hDealName">—</div>
+            <div style="font-size:12.5px;color:var(--ink-400);margin-top:3px;" id="hClient">—</div>
+          </div>
+          <div style="padding:0 1.5rem;border-right:1px solid var(--ink-100);">
+            <div class="form-label">Latest value</div>
+            <div style="font-size:1.4rem;font-weight:700;font-family:var(--fd);color:var(--ac);" id="hValue">—</div>
+            <div style="font-size:12px;color:var(--ink-400);margin-top:2px;" id="hCommDate">—</div>
+          </div>
+          <div style="padding-left:1.5rem;">
+            <div class="form-label">Stage</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px;">
+              <span class="badge bg-amber" id="hCurrStage"><i class="ti ti-circle-dot"></i> —</span>
+              <i class="ti ti-arrow-right" style="font-size:13px;color:var(--ink-300);"></i>
+              <span class="badge bg-purple" id="hNextStage"><i class="ti ti-circle"></i> —</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent insight banner -->
+      <div id="dealAgentBanner" style="display:none;margin-bottom:1.25rem;"
+           class="card" style="border-color:rgba(161,0,255,.25);background:rgba(161,0,255,.04);">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <i class="ti ti-robot" style="font-size:20px;color:var(--ac);flex-shrink:0;margin-top:2px;"></i>
+          <div>
+            <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ac-d);margin-bottom:4px;">
+              Deal status agent insight
+            </div>
+            <div style="font-size:13.5px;color:var(--ink-700);line-height:1.6;" id="dealAgentInsight"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
+        <div class="card">
+          <div class="card-hd"><i class="ti ti-flag"></i> Key milestones</div>
+          <div id="milestoneList"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><i class="ti ti-git-branch"></i> Deal stage progress</div>
+          <div class="stage-track" id="stageTrack"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+            <span class="badge bg-green"  style="font-size:10px;"><i class="ti ti-check"></i> Done</span>
+            <span class="badge bg-amber"  style="font-size:10px;"><i class="ti ti-circle-dot"></i> Current</span>
+            <span class="badge bg-blue"   style="font-size:10px;"><i class="ti ti-circle"></i> Next</span>
+            <span class="badge bg-gray"   style="font-size:10px;">Upcoming</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="card-hd" style="margin-bottom:0;"><i class="ti ti-calendar-week"></i> 4-week delivery plan</div>
+          <button class="btn btn-ghost btn-sm" onclick="App.openEditWeekPlan()">
+            <i class="ti ti-edit"></i> Edit plan
+          </button>
+        </div>
+        <div class="week-grid" id="weekPlan"></div>
+        <div class="week-legend">
+          <span class="wl-item wl-pur">Commercial</span>
+          <span class="wl-item wl-grn">Technical</span>
+          <span class="wl-item wl-amb">Review</span>
+          <span class="wl-item wl-blu">Client</span>
+        </div>
+      </div>
+    </div><!-- /view-overview -->
+
+    <!-- ════════════════════════════════════
+         VIEW 2 — FEATURES & INVENTORY  (Slide 2)
+    ════════════════════════════════════ -->
+    <div class="view" id="view-features">
+      <div class="view-hd">
+        <div>
+          <h2 class="view-title">Features &amp; inventory</h2>
+          <p class="view-sub">Feature tagging, requirements coverage and inventory traceability. Upload files or enter manually.</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="Orchestrator.runAgent('features','features')">
+            <i class="ti ti-robot"></i> Run features agent
+          </button>
+          <button class="btn btn-sec btn-sm" onclick="App.openEditFeatures()">
+            <i class="ti ti-edit"></i> Edit data
+          </button>
+        </div>
+      </div>
+
+      <div id="featAgentBanner" style="display:none;margin-bottom:1.25rem;"
+           class="card" style="border-color:rgba(161,0,255,.25);background:rgba(161,0,255,.04);">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <i class="ti ti-robot" style="font-size:20px;color:var(--ac);flex-shrink:0;margin-top:2px;"></i>
+          <div>
+            <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ac-d);margin-bottom:4px;">
+              Features &amp; traceability agent insight
+            </div>
+            <div style="font-size:13.5px;color:var(--ink-700);line-height:1.6;" id="featAgentInsight"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:1.25rem;">
+
+        <!-- Features -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <div class="card-hd" style="margin-bottom:0;"><i class="ti ti-list-check"></i> Features</div>
+            <button class="btn btn-ghost btn-xs" onclick="App.nav('files')"><i class="ti ti-upload"></i> Upload</button>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:1rem;">
+            <span style="font-size:2rem;font-weight:700;font-family:var(--fd);color:var(--ink-900);" id="fTotal">200</span>
+            <span style="font-size:12.5px;color:var(--ink-400);">total features</span>
+          </div>
+          <div id="featureBreakdown"></div>
+          <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--ink-100);">
+            <a href="#" class="link-chip" onclick="App.toast('Features.xlsx — link to your file share','info');return false;">
+              <i class="ti ti-file-spreadsheet"></i> Features.xlsx
+            </a>
+          </div>
+        </div>
+
+        <!-- Requirements -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <div class="card-hd" style="margin-bottom:0;"><i class="ti ti-file-text"></i> Requirements</div>
+            <button class="btn btn-ghost btn-xs" onclick="App.nav('files')"><i class="ti ti-upload"></i> Upload</button>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:1rem;">
+            <span style="font-size:2rem;font-weight:700;font-family:var(--fd);color:var(--ink-900);" id="rTotal">151</span>
+            <span style="font-size:12.5px;color:var(--ink-400);">total requirements</span>
+          </div>
+          <div id="reqBreakdown"></div>
+          <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--ink-100);display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="#" class="link-chip" onclick="App.toast('Opening requirements folder','info');return false;">
+              <i class="ti ti-folder"></i> Requirements docs
+            </a>
+            <a href="#" class="link-chip" onclick="App.toast('Opening client documents','info');return false;">
+              <i class="ti ti-building"></i> Client docs
+            </a>
+          </div>
+        </div>
+
+        <!-- Inventory -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <div class="card-hd" style="margin-bottom:0;"><i class="ti ti-database"></i> Inventory</div>
+            <button class="btn btn-ghost btn-xs" onclick="App.nav('files')"><i class="ti ti-upload"></i> Upload</button>
+          </div>
+          <div id="inventoryList"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><i class="ti ti-git-merge"></i> Traceability — requirements to inventory</div>
+        <div id="traceSection"></div>
+      </div>
+    </div><!-- /view-features -->
+
+    <!-- ════════════════════════════════════
+         VIEW 3 — PRICE & EFFORT  (Slide 3)
+    ════════════════════════════════════ -->
+    <div class="view" id="view-pricing">
+      <div class="view-hd">
+        <div>
+          <h2 class="view-title">Price &amp; effort validation</h2>
+          <p class="view-sub">Cross-system reconciliation and 5-point compliance checks.</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="Orchestrator.runAgent('pricing','pricing')">
+            <i class="ti ti-robot"></i> Run validation agent
+          </button>
+          <button class="btn btn-sec btn-sm" onclick="App.openEditPricing()">
+            <i class="ti ti-edit"></i> Edit values
+          </button>
+        </div>
+      </div>
+
+      <div id="priceAgentBanner" style="display:none;margin-bottom:1.25rem;"
+           class="card" style="border-color:rgba(161,0,255,.25);background:rgba(161,0,255,.04);">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <i class="ti ti-robot" style="font-size:20px;color:var(--ac);flex-shrink:0;margin-top:2px;"></i>
+          <div>
+            <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ac-d);margin-bottom:4px;">
+              Price &amp; effort validation agent insight
+            </div>
+            <div style="font-size:13.5px;color:var(--ink-700);line-height:1.6;" id="priceAgentInsight"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document intelligence agent banner (shown after doc agent runs) -->
+      <div id="docAgentBanner" style="display:none;margin-bottom:1.25rem;"
+           class="card" style="border-color:rgba(239,159,39,.35);background:rgba(239,159,39,.06);">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <i class="ti ti-file-analytics" style="font-size:20px;color:var(--a400);flex-shrink:0;margin-top:2px;"></i>
+          <div>
+            <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--a600);margin-bottom:4px;">
+              Document intelligence agent — auto-validation result
+            </div>
+            <div style="font-size:13.5px;color:var(--ink-700);line-height:1.6;" id="docAgentInsight"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
+        <div class="card">
+          <div class="card-hd"><i class="ti ti-clock"></i> Effort reconciliation (days)</div>
+          <table class="pe-table">
+            <thead><tr><th>Source</th><th>Days</th><th>Status</th></tr></thead>
+            <tbody id="effortBody"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-hd"><i class="ti ti-currency-pound"></i> Price reconciliation (£)</div>
+          <table class="pe-table">
+            <thead><tr><th>Source</th><th>Price</th><th>Status</th></tr></thead>
+            <tbody id="priceBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="card-hd" style="margin-bottom:0;"><i class="ti ti-clipboard-check"></i> Validation checks</div>
+          <div id="valSummary"></div>
+        </div>
+        <div id="valChecks"></div>
+      </div>
+    </div><!-- /view-pricing -->
+
+    <!-- ════════════════════════════════════
+         VIEW 4 — AI AGENTS
+    ════════════════════════════════════ -->
+    <div class="view" id="view-agents">
+      <div class="view-hd">
+        <div>
+          <h2 class="view-title">AI agents</h2>
+          <p class="view-sub">Four focused agents — deal tracking, feature traceability, price reconciliation, and document compliance validation. Upload files then run agents for AI-powered insights via Claude.</p>
+        </div>
+        <button class="btn btn-pri" onclick="Orchestrator.runAll()">
+          <i class="ti ti-player-play"></i> Run all 4 agents
+        </button>
+      </div>
+
+      <div id="agentCards"></div>
+
+      <div class="agent-console">
+        <div class="console-hd">
+          <i class="ti ti-terminal-2"></i>
+          Agent activity log
+          <button class="console-clr" onclick="Orchestrator.clearLog()">Clear</button>
+        </div>
+        <div class="console-body" id="agentLog">
+          <div class="log-line ll-info">
+            <span class="log-time">--:--:--</span>
+            <span class="log-agent">[System]</span>
+            <span class="log-msg">Agents ready. Upload files or run agents to begin.</span>
+          </div>
+        </div>
+      </div>
+    </div><!-- /view-agents -->
+
+    <!-- ════════════════════════════════════
+         VIEW 5 — FILE READER
+    ════════════════════════════════════ -->
+    <div class="view" id="view-files">
+      <div class="view-hd">
+        <div>
+          <h2 class="view-title">File reader</h2>
+          <p class="view-sub">Upload Excel files. The smarter parser reads all sheets, detects RACI/assumptions/rate card tabs, cross-references features against inventory, and feeds structured data to all 4 agents.</p>
+        </div>
+        <button class="btn btn-pri" id="processBtn" disabled onclick="FReader.processAll()">
+          <i class="ti ti-cpu"></i> Process all files
+        </button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+
+        <!-- Left col: features & inventory -->
+        <div>
+          <div class="sec-label"><i class="ti ti-table"></i> Features &amp; inventory files</div>
+
+          <div class="card" style="margin-bottom:10px;">
+            <div class="card-hd" style="margin-bottom:.75rem;"><i class="ti ti-list-check"></i> Features.xlsx</div>
+            <div class="drop-zone" id="dz-features"
+              onclick="FReader.triggerPick('features')"
+              ondragover="FReader.dzDrag(event,'features')"
+              ondragleave="FReader.dzLeave('features')"
+              ondrop="FReader.dzDrop(event,'features')">
+              <i class="ti ti-upload"></i>
+              <div class="dz-title">Drop Features.xlsx here</div>
+              <div class="dz-sub">Expected columns: Feature ID, Description, Technology, Requirement ID</div>
+            </div>
+            <input type="file" id="fp-features" accept=".xlsx,.xls,.csv" style="display:none;"
+              onchange="FReader.handlePick('features',this)">
+          </div>
+
+          <div class="card">
+            <div class="card-hd" style="margin-bottom:.75rem;"><i class="ti ti-database"></i> Inventory files</div>
+            <div class="drop-zone" id="dz-inventory"
+              onclick="FReader.triggerPick('inventory')"
+              ondragover="FReader.dzDrag(event,'inventory')"
+              ondragleave="FReader.dzLeave('inventory')"
+              ondrop="FReader.dzDrop(event,'inventory')">
+              <i class="ti ti-upload"></i>
+              <div class="dz-title">Drop inventory files here</div>
+              <div class="dz-sub">Inventory Java.xlsx · Inventory Salesforce.xlsx · E2E Inventory.xlsx</div>
+            </div>
+            <input type="file" id="fp-inventory" accept=".xlsx,.xls,.csv" multiple style="display:none;"
+              onchange="FReader.handlePick('inventory',this)">
+            <div class="file-list" id="fl-inventory"></div>
+          </div>
+        </div>
+
+        <!-- Right col: commercial files -->
+        <div>
+          <div class="sec-label"><i class="ti ti-currency-pound"></i> Commercial files</div>
+
+          <div class="card" style="margin-bottom:10px;">
+            <div class="card-hd" style="margin-bottom:.75rem;"><i class="ti ti-file-spreadsheet"></i> myISP staffing sheet</div>
+            <div class="drop-zone" id="dz-myisp"
+              onclick="FReader.triggerPick('myisp')"
+              ondragover="FReader.dzDrag(event,'myisp')"
+              ondragleave="FReader.dzLeave('myisp')"
+              ondrop="FReader.dzDrop(event,'myisp')">
+              <i class="ti ti-upload"></i>
+              <div class="dz-title">Drop myISP staffing sheet</div>
+              <div class="dz-sub">Expected: total days, total price, rate card columns</div>
+            </div>
+            <input type="file" id="fp-myisp" accept=".xlsx,.xls,.csv" style="display:none;"
+              onchange="FReader.handlePick('myisp',this)">
+          </div>
+
+          <div class="card" style="margin-bottom:10px;">
+            <div class="card-hd" style="margin-bottom:.75rem;"><i class="ti ti-file-spreadsheet"></i> SP51</div>
+            <div class="drop-zone" id="dz-sp51"
+              onclick="FReader.triggerPick('sp51')"
+              ondragover="FReader.dzDrag(event,'sp51')"
+              ondragleave="FReader.dzLeave('sp51')"
+              ondrop="FReader.dzDrop(event,'sp51')">
+              <i class="ti ti-upload"></i>
+              <div class="dz-title">Drop SP51 spreadsheet</div>
+              <div class="dz-sub">Expected: RACI, assumptions, effort totals, price totals</div>
+            </div>
+            <input type="file" id="fp-sp51" accept=".xlsx,.xls,.csv" style="display:none;"
+              onchange="FReader.handlePick('sp51',this)">
+          </div>
+
+          <div class="card">
+            <div class="card-hd" style="margin-bottom:.75rem;"><i class="ti ti-file-spreadsheet"></i> Pricing spreadsheet</div>
+            <div class="drop-zone" id="dz-pricing"
+              onclick="FReader.triggerPick('pricing')"
+              ondragover="FReader.dzDrag(event,'pricing')"
+              ondragleave="FReader.dzLeave('pricing')"
+              ondrop="FReader.dzDrop(event,'pricing')">
+              <i class="ti ti-upload"></i>
+              <div class="dz-title">Drop pricing spreadsheet</div>
+              <div class="dz-sub">Expected: total price, rate card, adjustments</div>
+            </div>
+            <input type="file" id="fp-pricing" accept=".xlsx,.xls,.csv" style="display:none;"
+              onchange="FReader.handlePick('pricing',this)">
+          </div>
+
+          <!-- RFP / client clarification — feeds doc agent v2, v3 answers -->
+          <div class="card" style="margin-top:10px;border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.04);">
+            <div class="card-hd" style="margin-bottom:.5rem;color:var(--a600);">
+              <i class="ti ti-file-description" style="color:var(--a400);"></i>
+              RFP / client clarifications
+              <span class="badge bg-amber" style="margin-left:auto;font-size:10px;">Doc agent</span>
+            </div>
+            <div style="font-size:12px;color:var(--ink-400);margin-bottom:.75rem;line-height:1.5;">
+              Optional but recommended — enables the document intelligence agent to auto-answer validation checks v2 and v3 (SP51 RACI alignment, external assumptions).
+            </div>
+            <div class="drop-zone" id="dz-rfp"
+              onclick="FReader.triggerPick('rfp')"
+              ondragover="FReader.dzDrag(event,'rfp')"
+              ondragleave="FReader.dzLeave('rfp')"
+              ondrop="FReader.dzDrop(event,'rfp')"
+              style="border-color:rgba(239,159,39,.4);">
+              <i class="ti ti-upload" style="color:var(--a400);"></i>
+              <div class="dz-title">Drop RFP / client clarification doc</div>
+              <div class="dz-sub">Excel or CSV. Used to validate SP51 assumptions and RACI alignment.</div>
+            </div>
+            <input type="file" id="fp-rfp" accept=".xlsx,.xls,.csv" style="display:none;"
+              onchange="FReader.handlePick('rfp',this)">
+          </div>
+        </div>
+
+      </div><!-- /grid -->
+
+      <div id="parsedSummaries"></div>
+    </div><!-- /view-files -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="App.closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hd">
+      <span id="modalTitle"></span>
+      <button class="modal-x" onclick="App.closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!--
+  JS LOAD ORDER (critical — do not reorder):
+  1. data.js          — STATE object must exist before everything else
+  2. orchestrator.js  — needs STATE; exports Orchestrator
+  3. deal-agent.js    — needs STATE + Orchestrator; registers itself
+  4. features-agent.js
+  5. pricing-agent.js
+  6. doc-agent.js     — NEW: runs last; reads STATE.extracted built by FileReader
+  7. file-reader.js   — needs STATE + Orchestrator + App render functions
+  8. app.js           — needs all of the above; inits on DOMContentLoaded
+-->
+<script src="data.js"></script>
+<script src="orchestrator.js"></script>
+<script src="deal-agent.js"></script>
+<script src="features-agent.js"></script>
+<script src="pricing-agent.js"></script>
+<script src="doc-agent.js"></script>
+<script src="file-reader.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
