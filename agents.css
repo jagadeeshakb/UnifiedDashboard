@@ -1,0 +1,87 @@
+/* ═══════════════════════════════════════════
+   AGENTS.CSS — Agent cards and console
+   Accenture Governance Dashboard v2.0
+═══════════════════════════════════════════ */
+
+/* ── AGENT CARDS ── */
+.agent-card{
+  background:var(--surface);border:1px solid var(--ink-100);
+  border-radius:var(--rxl);overflow:hidden;box-shadow:var(--sh1);
+  margin-bottom:12px;
+}
+.agent-hd{display:flex;align-items:flex-start;gap:12px;padding:1.125rem 1.25rem 1rem}
+.agent-av{
+  width:42px;height:42px;border-radius:var(--rlg);display:flex;
+  align-items:center;justify-content:center;font-size:20px;
+  flex-shrink:0;position:relative;
+}
+.agent-sdot{
+  position:absolute;bottom:-2px;right:-2px;
+  width:11px;height:11px;border-radius:50%;border:2px solid var(--surface);
+}
+.sd-idle {background:var(--ink-300)}
+.sd-ready{background:var(--g400)}
+.sd-run  {background:var(--a400);animation:pulse .8s infinite}
+.sd-done {background:var(--g400)}
+.sd-error{background:var(--r400)}
+
+.agent-name{font-size:14px;font-weight:600;color:var(--ink-900);line-height:1.2}
+.agent-role{font-size:12px;color:var(--ink-400);margin-top:2px}
+.agent-desc{font-size:13px;color:var(--ink-500);line-height:1.55;margin-bottom:.75rem;padding:0 1.25rem}
+.agent-caps{padding:0 1.25rem;display:flex;flex-direction:column;gap:5px;margin-bottom:1rem}
+.agent-cap{display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--ink-600)}
+.agent-cap i{font-size:13px;color:var(--ac);flex-shrink:0;margin-top:1px}
+
+.agent-foot{
+  padding:.875rem 1.25rem;border-top:1px solid var(--ink-100);
+  background:var(--ink-50);display:flex;align-items:center;gap:8px;
+}
+.agent-run{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 14px;border-radius:var(--rmd);background:var(--ac);
+  color:#fff;border:none;font-size:13px;font-weight:500;font-family:var(--fb);
+  cursor:pointer;transition:all .15s;
+}
+.agent-run:hover{background:var(--ac-d)}
+.agent-run:disabled{opacity:.5;cursor:not-allowed}
+.agent-run.running{background:var(--a400);cursor:not-allowed}
+.agent-last{font-size:11px;color:var(--ink-400);font-family:var(--fm)}
+
+/* ── AGENT OUTPUT ── */
+.agent-output{
+  border-radius:var(--rmd);padding:.875rem 1rem;font-size:13px;
+  color:var(--ink-600);line-height:1.6;background:var(--raised);
+  border:0.5px solid var(--ink-100);margin-top:8px;
+  white-space:pre-wrap;max-height:220px;overflow-y:auto;font-family:var(--fm);
+}
+.agent-output.ai-resp{
+  background:#EEEDFE;border-color:#AFA9EC;color:#26215C;
+  font-family:var(--fb);white-space:normal;
+}
+.agent-output-wrap{padding:0 1.25rem 1.25rem}
+
+/* ── CONSOLE ── */
+.agent-console{
+  background:var(--ink-900);border-radius:var(--rxl);overflow:hidden;
+  max-height:240px;display:flex;flex-direction:column;margin-top:1.5rem;
+}
+.console-hd{
+  display:flex;align-items:center;gap:8px;padding:10px 16px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.6);font-family:var(--fm);
+}
+.console-hd i{color:var(--ac-l)}
+.console-clr{
+  margin-left:auto;font-size:11px;background:none;border:none;
+  color:rgba(255,255,255,.3);font-family:var(--fm);cursor:pointer;
+}
+.console-clr:hover{color:rgba(255,255,255,.6)}
+.console-body{flex:1;overflow-y:auto;padding:10px 16px;display:flex;flex-direction:column;gap:4px}
+.log-line{display:flex;gap:10px;font-family:var(--fm);font-size:11.5px;line-height:1.5;animation:fadeUp .15s ease}
+.log-time {color:rgba(255,255,255,.22);flex-shrink:0}
+.log-agent{flex-shrink:0;font-weight:500}
+.log-msg  {color:rgba(255,255,255,.7)}
+.ll-info    .log-agent{color:#60a5fa}
+.ll-success .log-agent{color:#4ade80}
+.ll-warning .log-agent{color:#fbbf24}
+.ll-error   .log-agent{color:#f87171}
